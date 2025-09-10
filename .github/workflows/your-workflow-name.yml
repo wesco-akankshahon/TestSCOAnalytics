@@ -1,9 +1,12 @@
-name: Generate File Version Summary
+name: Version Summary
 
 on:
   push:
     branches:
       - main
+
+permissions:
+  contents: write
 
 jobs:
   version-summary:
@@ -12,7 +15,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Important to get full history
+          fetch-depth: 0
 
       - name: Generate version summary
         run: |

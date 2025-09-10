@@ -1,4 +1,4 @@
-name: Version Summary
+name: Full Version History Summary
 
 on:
   push:
@@ -15,19 +15,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Ensures full commit history is available
+          fetch-depth: 0  # Required to access full commit history
 
-      - name: Generate enhanced version summary
+      - name: Generate full version history summary
         run: |
-          echo "# 📄 File Version Summary" > VERSION_SUMMARY.md
+          echo "# 📜 Full File Version History" > VERSION_SUMMARY.md
           echo "" >> VERSION_SUMMARY.md
-          for file in $(git diff --name-only HEAD~1); do
+
+          for file in $(git ls-files); do
             echo "## 🔹 $file" >> VERSION_SUMMARY.md
-            commit=$(git log -1 --pretty=format:"**Last Commit**: %s (%ad by %an)" --date=short -- "$file")
-            echo "$commit" >> VERSION_SUMMARY.md
-            echo "**Changes:**" >> VERSION_SUMMARY.md
+            echo "" >> VERSION_SUMMARY.md
+
+            # List all commits that modified this file
+            git log --pretty=format:"- **%h**: %s (%ad by %an)" --date=short -- "$file" >> VERSION_SUMMARY.md
+
+            echo "" >> VERSION_SUMMARY.md
+            echo "**Recent Changes Preview:**" >> VERSION_SUMMARY.md
             echo '```diff' >> VERSION_SUMMARY.md
-            git diff HEAD~1 -- "$file" >> VERSION_SUMMARY.md
+
+            # Show diff between last two commits that touched this file
+            commits=($(git log --pretty=format:"%H" -- "$file"))
+            if [ ${#commits[@]} -ge 2 ]; then
+              git diff ${commits[1]} ${commits[0]} -- "$file" >> VERSION_SUMMARY.md
+            else
+              echo "# No previous version to compare." >> VERSION_SUMMARY.md
+            fi
+
             echo '```' >> VERSION_SUMMARY.md
             echo "" >> VERSION_SUMMARY.md
           done
@@ -37,5 +50,5 @@ jobs:
           git config user.name "GitHub Action"
           git config user.email "action@github.com"
           git add VERSION_SUMMARY.md
-          git commit -m "Update version summary"
+          git commit -m "Update full version history summary"
           git push

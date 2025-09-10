@@ -1,0 +1,31 @@
+name: Generate File Version Summary
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  version-summary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Important to get full history
+
+      - name: Generate version summary
+        run: |
+          echo "# File Version Summary" > VERSION_SUMMARY.md
+          for file in $(git ls-files); do
+            commit=$(git log -1 --pretty=format:"%s (%ad by %an)" --date=short -- "$file")
+            echo "- **$file**: $commit" >> VERSION_SUMMARY.md
+          done
+
+      - name: Commit version summary
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git add VERSION_SUMMARY.md
+          git commit -m "Update version summary"
+          git push

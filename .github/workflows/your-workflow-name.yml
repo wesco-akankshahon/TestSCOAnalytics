@@ -15,14 +15,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Ensures full commit history is available
 
-      - name: Generate version summary
+      - name: Generate enhanced version summary
         run: |
-          echo "# File Version Summary" > VERSION_SUMMARY.md
-          for file in $(git ls-files); do
-            commit=$(git log -1 --pretty=format:"%s (%ad by %an)" --date=short -- "$file")
-            echo "- **$file**: $commit" >> VERSION_SUMMARY.md
+          echo "# 📄 File Version Summary" > VERSION_SUMMARY.md
+          echo "" >> VERSION_SUMMARY.md
+          for file in $(git diff --name-only HEAD~1); do
+            echo "## 🔹 $file" >> VERSION_SUMMARY.md
+            commit=$(git log -1 --pretty=format:"**Last Commit**: %s (%ad by %an)" --date=short -- "$file")
+            echo "$commit" >> VERSION_SUMMARY.md
+            echo "**Changes:**" >> VERSION_SUMMARY.md
+            echo '```diff' >> VERSION_SUMMARY.md
+            git diff HEAD~1 -- "$file" >> VERSION_SUMMARY.md
+            echo '```' >> VERSION_SUMMARY.md
+            echo "" >> VERSION_SUMMARY.md
           done
 
       - name: Commit version summary
